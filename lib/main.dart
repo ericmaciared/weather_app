@@ -55,19 +55,19 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final String key = "ef3fe5a5442e2d0a4104dc0b12ea57b7";
-   Weather? weather;
-   WeatherFactory? wf;
-   String? cityName;
-   WeatherType? weatherType;
-  final List<String> entries = <String>['A', 'B', 'C'];
-  final List<int> colorCodes = <int>[600, 500, 100];
+  Weather? weather;
+  WeatherFactory? wf;
+  String? cityName;
+  WeatherType? weatherType;
+  List<Weather> forecast = <Weather>[];
+  List<String> icons = <String>[];
 
   @override
   initState() {
-    wf = WeatherFactory(key);
-    cityName = "Curitiba";
-
     super.initState();
+
+    wf = WeatherFactory(key);
+    cityName = "Barcelona";
 
     _loadRegularData();
     _loadForecastData();
@@ -75,7 +75,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _loadRegularData() async {
     weather = await wf!.currentWeatherByCityName(cityName!);
-    print(weather!.weatherMain);
     switch (weather!.weatherMain!) {
       case "Rain":
         weatherType = WeatherType.heavyRainy;
@@ -102,8 +101,36 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
-  void _loadForecastData() {
-    setState(() {});
+  Future<void> _loadForecastData() async {
+    forecast = await wf!.fiveDayForecastByCityName(cityName!);
+    icons = <String>[];
+
+    for (int i = 0; i < forecast.length; i++) {
+      switch (forecast[i].weatherMain!) {
+        case "Rain":
+          icons.add("🌧");
+          break;
+        case "Clear":
+          icons.add("☀");
+          break;
+        case "Thunderstorm":
+          icons.add("⛈");
+          break;
+        case "Snow":
+          icons.add("❄");
+          break;
+        case "Drizzle":
+          icons.add("🌦");
+          break;
+        case "Clouds":
+          icons.add("☁");
+          break;
+        default:
+          break;
+      }
+
+      setState(() {});
+    }
   }
 
   @override
@@ -116,63 +143,80 @@ class _MyHomePageState extends State<MyHomePage> {
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height),
           SingleChildScrollView(
-            child:weather == null ? SizedBox.shrink() : Column(
-              children: [
-                const SizedBox(height: 80),
-                Text(cityName!,
-                    style: GoogleFonts.lato(
-                      textStyle: Theme.of(context).textTheme.headline2,
-                      fontSize: 48,
-                      fontWeight: FontWeight.w700,
-                    )),
-                Text(weather!.temperature.toString(),
-                    style: GoogleFonts.lato(
-                      textStyle: Theme.of(context).textTheme.headline4,
-                      fontSize: 60,
-                      fontWeight: FontWeight.w700,
-                    )),
-                Text(
-                  weather!.weatherDescription!,
-                  style: GoogleFonts.lato(
-                    textStyle: Theme.of(context).textTheme.headline2,
-                    fontSize: 30,
-                    fontWeight: FontWeight.w700,
+            child: weather == null
+                ? SizedBox.shrink()
+                : Column(
+                    children: [
+                      const SizedBox(height: 80),
+                      Text(cityName!,
+                          style: GoogleFonts.lato(
+                            textStyle: Theme.of(context).textTheme.headline2,
+                            fontSize: 48,
+                            fontWeight: FontWeight.w700,
+                          )),
+                      Text('${weather!.temperature.toString().substring(0, 4)}º',
+                          style: GoogleFonts.lato(
+                            textStyle: Theme.of(context).textTheme.headline4,
+                            fontSize: 60,
+                            fontWeight: FontWeight.w700,
+                          )),
+                      Text(
+                        weather!.weatherDescription!,
+                        style: GoogleFonts.lato(
+                          textStyle: Theme.of(context).textTheme.headline2,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text("Max. ${weather!.tempMax.toString().substring(0, 4)}º",
+                              style: GoogleFonts.lato(
+                                textStyle:
+                                    Theme.of(context).textTheme.headline2,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                              )),
+                          const SizedBox(width: 12),
+                          Text("Min. ${weather!.tempMin.toString().substring(0, 4)}º",
+                              style: GoogleFonts.lato(
+                                textStyle:
+                                    Theme.of(context).textTheme.headline2,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                              ))
+                        ],
+                      ),
+                      SizedBox(height: 12),
+                      ListView.builder(
+                          padding: const EdgeInsets.all(8),
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: forecast.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return Container(
+                              height: 50,
+                              color: Colors.white.withOpacity(0.3),
+                              child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Text(forecast[index]
+                                        .date!
+                                        .toString()
+                                        .substring(5, 16)),
+                                    Text(icons[index]),
+                                    Text(
+                                        'Min: ${forecast[index].tempMin.toString().substring(0, 4)}º'),
+                                    Text(
+                                        'Max: ${forecast[index].tempMax.toString().substring(0, 4)}º')
+                                  ]),
+                            );
+                          })
+                    ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text("Max. ${weather!.tempMax}º",
-                        style: GoogleFonts.lato(
-                          textStyle: Theme.of(context).textTheme.headline2,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        )),
-                    const SizedBox(width: 12),
-                    Text("Min. ${weather!.tempMin}º",
-                        style: GoogleFonts.lato(
-                          textStyle: Theme.of(context).textTheme.headline2,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ))
-                  ],
-                ),
-                SizedBox(height: 12),
-                ListView.builder(
-                    padding: const EdgeInsets.all(8),
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    itemCount: entries.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Container(
-                        height: 50,
-                        color: Colors.white.withOpacity(0.3),
-                        child: Center(child: Text('Entry ${entries[index]}')),
-                      );
-                    })
-              ],
-            ),
           )
         ],
       ),
